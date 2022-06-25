@@ -16,6 +16,8 @@ public sealed class TombstoneMazeModule : ColoredSquaresModuleBase
     private int _opponentRememberedPosition;
     private int _opponentLastMoveDir;
 
+    private Coroutine _flashWait;
+
     protected override void DoStart()
     {
         SetInitialState();
@@ -213,7 +215,7 @@ public sealed class TombstoneMazeModule : ColoredSquaresModuleBase
         }
 
         StartSquareColorsCoroutine(squares);
-        StartCoroutine(Flash((dir * 4) + (scale - 1), squares[(dir * 4) + (scale - 1)], SquareColor.White));
+        Flash((dir * 4) + (scale - 1), squares[(dir * 4) + (scale - 1)], SquareColor.White);
 
         Log("This means the pawn was at {0} (visible) or {1} (hidden).", _opponentPosition, _opponentPositionHidden);
     }
@@ -345,14 +347,21 @@ public sealed class TombstoneMazeModule : ColoredSquaresModuleBase
             }
         }
 
-        StartCoroutine(Flash(3 + 4 * dir, squares[3 + 4 * dir], SquareColor.White));
-
+        Flash(3 + 4 * dir, squares[3 + 4 * dir], SquareColor.White);
     }
 
-    private IEnumerator Flash(int ix, SquareColor baseCol, SquareColor newCol)
+    private void Flash(int ix, SquareColor baseCol, SquareColor newCol)
+    {
+        if(_flashWait != null)
+            StopCoroutine(_flashWait);
+        _flashWait = StartCoroutine(FlashStart(ix, baseCol, newCol));
+    }
+
+    private IEnumerator FlashStart(int ix, SquareColor baseCol, SquareColor newCol)
     {
         yield return new WaitUntil(() => !IsCoroutineActive);
         ActiveCoroutine = StartCoroutine(FlashInternal(ix, baseCol, newCol));
+        _flashWait = null;
     }
 
     private IEnumerator FlashInternal(int ix, SquareColor baseCol, SquareColor newCol)
