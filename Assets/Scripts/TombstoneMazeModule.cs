@@ -13,7 +13,7 @@ public sealed class TombstoneMazeModule : ColoredSquaresModuleBase
     private bool[] _canGoDownHidden, _canGoRightHidden;
     private int _pawnPosition, _opponentPosition, _pawnPositionHidden, _opponentPositionHidden;
 
-    private int _opponentRememberedPosition;
+    //private int _opponentRememberedPosition;
     private int _opponentLastMoveDir;
 
     private Coroutine _flashWait;
@@ -36,7 +36,7 @@ public sealed class TombstoneMazeModule : ColoredSquaresModuleBase
         _pawnPositionHidden = 12;
         _opponentPosition = 3;
         _opponentPositionHidden = 3;
-        _opponentRememberedPosition = 3;
+        //_opponentRememberedPosition = 3;
         _opponentLastMoveDir = 1;
 
         string box = " │\n─┼";
@@ -178,18 +178,20 @@ public sealed class TombstoneMazeModule : ColoredSquaresModuleBase
     private void EnemyMove()
     {
         SquareColor[] squares = Enumerable.Repeat(SquareColor.Black, 16).ToArray();
-        List<int> dirs = new int[] { 0, 1, 2, 3 }.ToList();
-        if(_opponentRememberedPosition % 4 == 0)
-            dirs.Remove(3);
-        if(_opponentRememberedPosition % 4 == 3)
-            dirs.Remove(1);
-        if(_opponentRememberedPosition / 4 == 0)
-            dirs.Remove(0);
-        if(_opponentRememberedPosition / 4 == 3)
-            dirs.Remove(2);
+        //List<int> dirs = new int[] { 0, 1, 2, 3 }.ToList();
+        //if(_opponentRememberedPosition % 4 == 0)
+        //    dirs.Remove(3);
+        //if(_opponentRememberedPosition % 4 == 3)
+        //    dirs.Remove(1);
+        //if(_opponentRememberedPosition / 4 == 0)
+        //    dirs.Remove(0);
+        //if(_opponentRememberedPosition / 4 == 3)
+        //    dirs.Remove(2);
 
-        int dir = RNG.Range(0, 3) != 0 ? SolveMaze() : dirs.PickRandom();
-        int scale = RNG.Range(1, 4);
+        //int dir = RNG.Range(0, 3) != 0 ? SolveMaze() : dirs.PickRandom();
+        //int scale = RNG.Range(1, 4);
+        int dir = SolveMaze();
+        int scale = 1;
 
         for(int i = 0; i < scale; ++i)
         {
@@ -222,9 +224,7 @@ public sealed class TombstoneMazeModule : ColoredSquaresModuleBase
 
     private int SolveMaze()
     {
-        List<int> todo = Enumerable.Range(0, 16).ToList();
-        int start = RNG.Range(0, 2) != 0 ? _opponentRememberedPosition : _opponentPosition;
-        todo.Remove(start);
+        int start = _opponentPosition; // RNG.Range(0, 2) != 0 ? _opponentRememberedPosition : _opponentPosition;
         Dictionary<int, int> dirToAdj = new Dictionary<int, int>();
         if((MazeDirections(start) & 8) != 0)
             dirToAdj.Add(3, start - 1);
@@ -234,6 +234,7 @@ public sealed class TombstoneMazeModule : ColoredSquaresModuleBase
             dirToAdj.Add(0, start - 4);
         if((MazeDirections(start) & 1) != 0)
             dirToAdj.Add(2, start + 4);
+
         tryagain:
         KeyValuePair<int, int> kvp = dirToAdj.PickRandom();
         dirToAdj.Remove(kvp.Key);
@@ -247,9 +248,16 @@ public sealed class TombstoneMazeModule : ColoredSquaresModuleBase
         if((MazeDirections(13) & 8) != 0)
             goal.Add(13);
 
+        List<int> done = new List<int>() { start };
+
         while(active.Count != 0)
         {
+                active.RemoveAll(i => done.Contains(i));
+            if(active.Count == 0)
+                goto tryagain;
+
             int picked = active.PickRandom();
+            done.Add(picked);
             active.Remove(picked);
 
             if((MazeDirections(picked) & 8) != 0)
@@ -313,39 +321,39 @@ public sealed class TombstoneMazeModule : ColoredSquaresModuleBase
         int dir = (_opponentLastMoveDir + 2) % 4;
         if(RNG.Range(0, 2) != 0)
             dir = RNG.Range(0, 4);
-        if(_opponentRememberedPosition == 8)
+        if(_opponentPosition == 8)
             dir = 2;
-        if(_opponentRememberedPosition == 13)
+        if(_opponentPosition == 13)
             dir = 3;
 
-        bool wall = false;
-        if(dir == 0)
-            wall = (MazeDirections(_opponentPosition) & 2) == 0 || _opponentPosition == _pawnPosition - 4;
-        if(dir == 1)
-            wall = (MazeDirections(_opponentPosition) & 4) == 0 || _opponentPosition == _pawnPosition + 1;
-        if(dir == 2)
-            wall = (MazeDirections(_opponentPosition) & 1) == 0 || _opponentPosition == _pawnPosition + 4;
-        if(dir == 3)
-            wall = (MazeDirections(_opponentPosition) & 8) == 0 || _opponentPosition == _pawnPosition - 1;
+        //bool wall = false;
+        //if(dir == 0)
+        //    wall = (MazeDirections(_opponentPosition) & 2) == 0 || _opponentPosition == _pawnPosition - 4;
+        //if(dir == 1)
+        //    wall = (MazeDirections(_opponentPosition) & 4) == 0 || _opponentPosition == _pawnPosition + 1;
+        //if(dir == 2)
+        //    wall = (MazeDirections(_opponentPosition) & 1) == 0 || _opponentPosition == _pawnPosition + 4;
+        //if(dir == 3)
+        //    wall = (MazeDirections(_opponentPosition) & 8) == 0 || _opponentPosition == _pawnPosition - 1;
 
         int dugix = dir == 0 ? _opponentPosition - 4 : dir == 1 ? _opponentPosition + 1 : dir == 2 ? _opponentPosition + 4 : _opponentPosition - 1;
 
         Log("The pawn dug in position {0}.", dugix);
-        if(wall)
-            Log("They did not gain any new information, as they hit something.");
-        else
-            Log("They have gained new information.");
+        //if(wall)
+        //    Log("They did not gain any new information, as they hit something.");
+        //else
+        //    Log("They have gained new information.");
 
-        if(!wall)
+        //if(!wall)
+        //{
+        //_opponentRememberedPosition = _opponentPosition;
+        if(dir == 2 && _opponentPosition == 8 || dir == 3 && _opponentPosition == 13)
         {
-            _opponentRememberedPosition = _opponentPosition;
-            if(dir == 2 && _opponentPosition == 8 || dir == 3 && _opponentPosition == 13)
-            {
-                StopAllCoroutines();
-                Strike("They dug in position 12. You lose. Strike!");
-                return;
-            }
+            StopAllCoroutines();
+            Strike("They dug in position 12. You lose. Strike!");
+            return;
         }
+        //}
 
         Flash(3 + 4 * dir, squares[3 + 4 * dir], SquareColor.White);
     }
